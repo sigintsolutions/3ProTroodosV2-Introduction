@@ -1,5 +1,7 @@
 # 3 Pro Introduction. 
 
+![](img/3pro_Logo.png)
+
 The Troodos Mountains are the green heart of Cyprus. The mountains capture and manage the rains that form our natural water resources. Agricultural dry-stone terraces, rural communities and forests shape the diverse landscape of Troodos. The agricultural and food processing sectors in the Troodos Mountains have high potentials but also face many challenges.
 
 The 3PRO-TROODOS Project is an Integrated Research Project (2019-2022), funded by the Research and Innovation Foundation of Cyprus, and coordinated by The Cyprus Institute. The project aims to improve agricultural production and food processing in the Troodos Mountains of Cyprus, through social innovation, sustainable natural resource management and climate change adaptation.
@@ -342,6 +344,11 @@ Press on top of the rule chain name and on the resulting page press the button `
 
 This will copy the rule chain unique id which will look something like that
 `99f7cc50-59e5-11ed-a89c-13427b0e0a64`
+
+
+Additional information about how the rule chain works can be found on the following readme:
+
+[Rule Chain Documentation](https://github.com/sigintsolutions/3ProTroodosV2-Introduction/blob/master/Rule%20Engine/platform%20rule%20chain%20post%20processing%20documentation.md)
 
 
 ## Importing device profiles
