@@ -1,0 +1,93 @@
+{
+  "dischargeRate": 1920,
+  "elevation": 850,
+  "enableBatteryAlarm": true,
+  "batteryLimit": 20.0,
+  "enableInactivityAlarm": true,
+  "fieldCapacity": 28.0,
+  "fieldName": "Dymes_Plum",
+  "latitude": 34.911804,
+  "longitude": 32.987321,
+  "soilMoistureThreshold": 23.0,
+  "wettedArea": 19,
+  "wiltingPoint": 18.0,
+  "fieldArea": 28.0,
+  "inactivityTimeoutMinutes": 120,
+  "rainPerTick": 0.2,
+  "cropCoefficientInitial": 0.35,
+  "cropCoefficientMid": 0.85,
+  "cropCoefficientEnd": 0.5,
+  "dayStartInitialStage": 1648798140000,
+  "dayStartDevelopmentStage": 1648798140000,
+  "dayStartMidSeason": 1654068540000,
+  "dayEndMidSeason": 1664609340000,
+  "dayEndLateSeason": 1667291340000,
+  "fcErrorMargin": 2.0,
+  "etcErrorMargin": 0.2,
+  "transmissionDuration_m": 70,
+  "tempLowLimit": -20.0,
+  "tempHighLimit": 50.0,
+  "humidityLowLimit": 0.5,
+  "humidityHighLimit": 100.0,
+  "soilMoistureLowLimit": 0.5,
+  "soilMoistureHighLimit": 70.0,
+  "soilTemperatureLowLimit": -5.0,
+  "soilTemperatureHighLimit": 45.0,
+  "nameOfTemperatureKey": "Ambient Temperature",
+  "nameOfHumidityKey": "Relative Humidity",
+  "nameOfRainTicksKey": "Pulse 0 Ticks",
+  "fieldConfiguration": {
+    "groupsArray": [
+      {
+        "Crop1": {
+          "species": "Whateverium",
+          "irrigation": "100%",
+          "sensorArray": [
+            {
+              "name": "",
+              "meas": "Soil Vol Water Content 01",
+              "tempKey": "Soil Temperature 01",
+              "soil_thickness": "0.225",
+              "weight": "0.5"
+            },
+            {
+              "name": "",
+              "meas": "Soil Vol Water Content 02",
+              "tempKey": "Soil Temperature 02",
+              "soil_thickness": "0.20",
+              "weight": "0.5"
+            },
+            {
+              "name": "",
+              "meas": "Soil Vol Water Content 03",
+              "tempKey": "Soil Temperature 03",
+              "soil_thickness": "0.175",
+              "weight": "0.5"
+            },
+            {
+              "name": "",
+              "meas": "Soil Vol Water Content 04",
+              "tempKey": "Soil Temperature 04",
+              "soil_thickness": "0.225",
+              "weight": "0.5"
+            },
+            {
+              "name": "",
+              "meas": "Soil Vol Water Content 05",
+              "tempKey": "Soil Temperature 05",
+              "soil_thickness": "0.20",
+              "weight": "0.5"
+            },
+            {
+              "name": "",
+              "meas": "Soil Vol Water Content 06",
+              "tempKey": "Soil Temperature 06",
+              "soil_thickness": "0.175",
+              "weight": "0.5"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

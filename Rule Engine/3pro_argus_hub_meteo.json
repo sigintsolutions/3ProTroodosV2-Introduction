@@ -1,0 +1,2224 @@
+{
+  "ruleChain": {
+    "additionalInfo": {
+      "description": ""
+    },
+    "name": "3Pro Argus Hub Meteo",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null
+  },
+  "metadata": {
+    "firstNodeIndex": 34,
+    "nodes": [
+      {
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 4792,
+          "layoutY": 1668
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save Calculated values as Timeseries",
+        "debugMode": true,
+        "configuration": {
+          "defaultTTL": 63072000,
+          "skipLatestPersistence": null,
+          "useServerTs": null
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2735,
+          "layoutY": 569
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Soil Sensor Out Of Bounds Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Humidity out of bounds",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2563,
+          "layoutY": 464
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Humidity Out Of Bounds Alarm",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Humidity out of bounds ",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2213,
+          "layoutY": 463
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Check Humidity Threshold",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//if message doesn't have that key property then there is no comparison that can be done. \nif (msg.hasOwnProperty(metadata.ss_nameOfHumidityKey)) \n{\n    if ((parseFloat(msg[metadata.ss_nameOfHumidityKey]) <= parseFloat(metadata.ss_humidityLowLimit)) || \n        (parseFloat(msg[metadata.ss_nameOfHumidityKey]) > parseFloat(metadata.ss_humidityHighLimit)))\n    {\n        return true;\n    }\n}\nreturn false;\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2564,
+          "layoutY": 381
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Temperature Out Of Bounds Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Temperature out of bounds",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2213,
+          "layoutY": 383
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Check Temperature Threshold",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "//if message doesn't have that key property then there is no comparison that can be done. \nif (msg.hasOwnProperty(metadata.ss_nameOfTemperatureKey)) \n{\n    if ((parseFloat(msg[metadata.ss_nameOfTemperatureKey]) <= parseFloat(metadata.ss_tempLowLimit)) || \n        (parseFloat(msg[metadata.ss_nameOfTemperatureKey]) > parseFloat(metadata.ss_tempHighLimit)))\n    {\n        return true;\n    }\n}\nreturn false;\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since there is a possibility that the messages will be received one at a time, and the logger will have an unknown number of messages, its better to only do the rest of the post processing if the message that came has the relevant telemetry. In any other way the postprocessing would have to trigger like 30 times. ",
+          "layoutX": 2484,
+          "layoutY": 567
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "check if the keys exist on for the alarm of the soil - temperature sensors.",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//fetch the name of the sensors\nvar fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\n\n//this works only for the first crop right now\nvar index = 0;\n\n//get the name of the root object. it will be used to select the sensor array\nvar name = Object.keys(fieldConfiguration.groupsArray[index]);\n\n//get number of sensors on that group.\nvar numberOfSensors = Object.keys(fieldConfiguration.groupsArray[index][name].sensorArray).length;\n\n//first lets check if the keys are available\nfor (var sensorIndex = 0; sensorIndex < numberOfSensors; sensorIndex++) \n{\n    var sensor = fieldConfiguration.groupsArray[index][name].sensorArray[sensorIndex];\n    //check if the sensor key exists on the message\n    //if the message has the sensor key, we can do more post processing downstream.\n    if (msg.hasOwnProperty(sensor.meas))\n    {\n        if ((parseFloat(msg[sensor.meas]) <= parseFloat(metadata.ss_soilTemperatureLowLimit)) || \n            (parseFloat(msg[sensor.meas]) > parseFloat(metadata.ss_soilTemperatureHighLimit)))\n        {\n            return true;\n        }\n    }\n    else if (msg.hasOwnProperty(sensor.tempKey))\n    {\n        if ((parseFloat(msg[sensor.tempKey]) <= parseFloat(metadata.ss_soilMoistureLowLimit)) || \n            (parseFloat(msg[sensor.tempKey]) > parseFloat(metadata.ss_soilMoistureHighLimit)))\n        {\n            return true;\n        }\n    }\n}\nreturn false;\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "some of the values that were calculated on the previous nodes have to be saved as telemetry so this nodes seperates them. ",
+          "layoutX": 4445,
+          "layoutY": 1659
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "seperate telemetry",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\n//this are the values that are calculated and we need to store as telemetry\nnewMsg.minTemperature = msg.minTemperature;\nnewMsg.maxTemperature = msg.maxTemperature;\nnewMsg.temperatureMean = msg.temperatureMean;\nnewMsg.precipitationLevel_mm = msg.precipitationLevel_mm;\n\nnewMsg.cropEvapotranspiration_mm = msg.cropEvapotranspiration_mm;\nnewMsg.referenceEvapotranspiration_mm = msg.referenceEvapotranspiration_mm;\nnewMsg.resultCropCoefficient = msg.resultCropCoefficient;\nnewMsg.warningFarmer = msg.warningFarmer;\n\nif (msg.hasOwnProperty('warningFarmer'))\n{\n    newMsg.warningFarmer = msg.warningFarmer;\n}\n\nif (msg.hasOwnProperty('warningConsultant'))\n{\n    newMsg.warningConsultant = msg.warningConsultant;\n}\n\nif (msg.hasOwnProperty('averageSoilMoistureAtDayChange'))\n{\n    newMsg.averageSoilMoistureAtDayChange = msg.averageSoilMoistureAtDayChange;\n}\n\nif (msg.hasOwnProperty('maxIrrigation_hrAtDayChange'))\n{\n    newMsg.maxIrrigation_hrAtDayChange = msg.maxIrrigation_hrAtDayChange;\n}\n\nif (msg.hasOwnProperty('maxIrrigation_hrminAtDayChange'))\n{\n    newMsg.maxIrrigation_hrminAtDayChange = msg.maxIrrigation_hrminAtDayChange;\n}\n\nif (msg.hasOwnProperty('irrigationRequiredStatusAtDayChange'))\n{\n   newMsg.irrigationRequiredStatusAtDayChange = msg.irrigationRequiredStatusAtDayChange;\n}\n\nvar msgType = \"POST_TELEMETRY_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "some of the values that were calculated on the previous nodes have to be saved as attributes, so this nodes seperates them. ",
+          "layoutX": 4454,
+          "layoutY": 1545
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Seperate attributes",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\nnewMsg.julianDayNumber = msg.julianDayNumber;\nnewMsg.sunsetHourNumber_rad = msg.sunsetHourNumber_rad;\nnewMsg.extraterrestrialRadiation_MJm2day = msg.extraterrestrialRadiation_MJm2day;\n//also save this as server attributes so that it is used on the next loop the next day\nnewMsg.averageSoilMoistureAtPreviousDayChange = msg.averageSoilMoistureAtDayChange;\n//update the memory\nnewMsg.memory = msg.memory;\n\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 4789,
+          "layoutY": 1540
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Calculated Server Attributes",
+        "debugMode": true,
+        "configuration": {
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2064,
+          "layoutY": 187
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "CheckInactivity",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "function stringToBool(str)\r\n{\r\n    return (String(str).toLowerCase() == \"true\");\r\n}\r\n\r\nif (stringToBool(metadata.ss_enableInactivityAlarm))\r\n{   \r\n    //one minute in ms is 60000. Date.now() as well as the rest of the timestaps are stored is unix standard time in milliseconds internally. \r\n    if ((Date.now() + (parseFloat(metadata.ss_inactivityTimeoutMinutes) *  60000)) > parseFloat(metadata.ss_lastActivityTime))\r\n    {\r\n        return true;\r\n    }\r\n}\r\nreturn false;\r\n      \r\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2362,
+          "layoutY": 184
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Device Inactive Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "General Alarm",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "dynamicSeverity": false,
+          "relationTypes": []
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2361,
+          "layoutY": 267
+        },
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Clear Device Inactive Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "General Alarm",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2375,
+          "layoutY": 106
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Battery Level Critical Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "General Alarm",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "dynamicSeverity": false,
+          "relationTypes": []
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2684,
+          "layoutY": 104
+        },
+        "type": "org.thingsboard.rule.engine.mail.TbMsgToEmailNode",
+        "name": "Temperature Email",
+        "debugMode": false,
+        "configuration": {
+          "fromTemplate": "info@testmail.org",
+          "toTemplate": "${userEmail}",
+          "ccTemplate": null,
+          "bccTemplate": null,
+          "subjectTemplate": "Device ${deviceType} battery critical",
+          "mailBodyType": "false",
+          "isHtmlTemplate": null,
+          "bodyTemplate": "Device ${deviceName} has high low battery"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 3030,
+          "layoutY": 152
+        },
+        "type": "org.thingsboard.rule.engine.mail.TbSendEmailNode",
+        "name": "Send email",
+        "debugMode": false,
+        "configuration": {
+          "useSystemSmtpSettings": true,
+          "smtpProtocol": "smtp",
+          "smtpHost": "localhost",
+          "smtpPort": 25,
+          "timeout": 10000,
+          "enableTls": false,
+          "tlsVersion": "TLSv1.2",
+          "enableProxy": false,
+          "proxyHost": null,
+          "proxyPort": null,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "username": null,
+          "password": null
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2686,
+          "layoutY": 188
+        },
+        "type": "org.thingsboard.rule.engine.mail.TbMsgToEmailNode",
+        "name": "Device Inactive Email",
+        "debugMode": false,
+        "configuration": {
+          "fromTemplate": "info@testmail.org",
+          "toTemplate": "${userEmail}",
+          "ccTemplate": null,
+          "bccTemplate": null,
+          "subjectTemplate": "Device ${deviceType} Device inactive",
+          "mailBodyType": "false",
+          "isHtmlTemplate": null,
+          "bodyTemplate": "Device ${deviceName} Device Inactive"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2065,
+          "layoutY": 112
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "CheckBatteryThreshold",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "function stringToBool(str)\n{\n    return (String(str).toLowerCase() == \"true\");\n}\n\n\n//alarm is stored as string \"true\". We need to parse it first. \nif (stringToBool(metadata.ss_enableBatteryAlarm))\n{\n    //if message doesn't have that key property then there is no comparison that can be done. \n    if (msg.hasOwnProperty('Battery Percentage')) \n    {\n        if (parseFloat(msg['Battery Percentage']) <= parseFloat(metadata.ss_batteryLimit))\n        {\n            return true;\n        }\n    }\n}\nreturn false;\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1703,
+          "layoutY": 153
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "fetch attributes for alarms",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "enableBatteryAlarm",
+            "enableInactivityAlarm",
+            "batteryLimit",
+            "inactivityTimeoutMinutes",
+            "nameOfHumidityKey",
+            "nameOfTemperatureKey",
+            "humidityLowLimit",
+            "humidityHighLimit",
+            "tempLowLimit",
+            "tempHighLimit"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1129,
+          "layoutY": 882
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "calculated watted area fraction",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//requires the field configuration data as well as\n//ss_fieldCapacity\n//ss_wettedArea\n//ss_soilMoistureThresshold\n//ss_dischargeRate\nvar newMsg = {};\n\n\n//---calculate wet area fraction\nnewMsg.wettedAreaFraction = parseFloat(metadata.ss_wettedArea) / parseFloat(metadata.ss_fieldArea);\nnewMsg.wettedAreaFraction = parseFloat(newMsg.wettedAreaFraction.toFixed(3));\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1484,
+          "layoutY": 790
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Calculated Server Attributes",
+        "debugMode": false,
+        "configuration": {
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1126,
+          "layoutY": 943
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "convert critical dates to JDN",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "Date.prototype.isLeapYear = function ()\n{\n    var year = this.getFullYear();\n    if ((year & 3) != 0) return false;\n    return ((year % 100) != 0 || (year % 400) == 0);\n};\n\n// Get Day of Year\nDate.prototype.getDOY = function ()\n{\n    //array that holds the day count on each month\n    var dayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];\n    var mn = this.getMonth();\n    var dn = this.getDate();\n    var dayOfYear = dayCount[mn] + dn;\n    //increase by one if the year is leap. \n    if (mn > 1 && this.isLeapYear()) \n    {\n        dayOfYear++;\n    }\n    return dayOfYear;\n};\n\nvar newMsg = {};\n\n//---calculate the dates as Julian date numbers\n\n//calculate the julian dates for the important dates\nvar tempDate = new Date(parseInt(metadata.ss_dayStartInitialStage));\nnewMsg.dayStartInitialStage_JDN = tempDate.getDOY();\n\ntempDate = new Date(parseInt(metadata.ss_dayStartDevelopmentStage));\nnewMsg.dayStartDevelopmentStage_JDN = tempDate.getDOY();\n\ntempDate = new Date(parseInt(metadata.ss_dayStartMidSeason));\nnewMsg.dayStartMidSeason_JDN = tempDate.getDOY();\n\ntempDate = new Date(parseInt(metadata.ss_dayEndMidSeason));\nnewMsg.dayEndMidSeason_JDN = tempDate.getDOY();\n\ntempDate = new Date(parseInt(metadata.ss_dayEndLateSeason));\nnewMsg.dayEndLateSeason_JDN = tempDate.getDOY();\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1135,
+          "layoutY": 1016
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Calculate Root Zone depth",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "var newMsg = {};\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nvar fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\n\nvar index = 0;\nvar name = Object.keys(fieldConfiguration.groupsArray[index]);\nvar fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\nvar numberOfSensors = Object.keys(fieldConfiguration.groupsArray[index][name].sensorArray).length;\nvar rootDepthSum_m = 0;\n\nfor (var sensorIndex = 0; sensorIndex < numberOfSensors; sensorIndex++) \n{\n    var sensor = fieldConfiguration.groupsArray[index][name].sensorArray[sensorIndex];\n    rootDepthSum_m += sensor.soil_thickness * sensor.weight;\n}\n\nnewMsg.rootDepthSum_m = rootDepthSum_m;\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1133,
+          "layoutY": 584
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "initialize memory",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "var newMsg = {};\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\n\nnewMsg.memory = {\n    \"currentTemperatureMin\": 100,\n    \"currentTemperatureMax\": -100,\n    \"rainTicksSummary\": 0,\n    \"lastTemperatureMeasurement\":0.0\n};\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since the update is related to the relevant fields, fetch fieldArea and wettedArea attributes which will be used downstream. ",
+          "layoutX": 822,
+          "layoutY": 875
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch field area or watted area",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "fieldArea",
+            "wettedArea"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since the update is related to the relevant fields, fetch day attributes attributes which will be used downstream. ",
+          "layoutX": 828,
+          "layoutY": 943
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Day Numbers",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "dayStartInitialStage",
+            "dayStartDevelopmentStage",
+            "dayStartMidSeason",
+            "dayEndMidSeason",
+            "dayEndLateSeason"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since the update is related to the root zone depth, fetch the fieldConfiguration Json, which will be used for the calculation of the rootzone depth downstream.",
+          "layoutX": 829,
+          "layoutY": 1008
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Field  Configuration",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "fieldConfiguration"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "on the calculation of the min and max temperature there is an internal attribute called memory. On a new device this is uninitialized, and it doesn't exist.\nSo if the attribute doesn't exist, the rest of the nodes downstream will create it and initialize it. ",
+          "layoutX": 510,
+          "layoutY": 586
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch memory for initialization",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "memory"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 1261,
+          "layoutY": 143
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save Timeseries",
+        "debugMode": false,
+        "configuration": {
+          "defaultTTL": 63072000,
+          "skipLatestPersistence": null,
+          "useServerTs": null
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 1260,
+          "layoutY": 46
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Client Attributes",
+        "debugMode": false,
+        "configuration": {
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": "false"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 269,
+          "layoutY": 146
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
+        "debugMode": false,
+        "configuration": {
+          "version": 0
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 1261,
+          "layoutY": 236
+        },
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log RPC from Device",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 1268,
+          "layoutY": 300
+        },
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log Other",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 1272,
+          "layoutY": 371
+        },
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
+        "name": "RPC Call Request",
+        "debugMode": false,
+        "configuration": {
+          "timeoutInSeconds": 60
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \"Success\" relation type.",
+          "layoutX": 41,
+          "layoutY": 269
+        },
+        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "name": "Device Profile Node",
+        "debugMode": false,
+        "configuration": {
+          "persistAlarmRulesState": false,
+          "fetchAlarmRulesStateOnStart": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since the messages are not coming at the same time, this means that the soil moisture averaging will be triggered multiple times, and more specifically the same number of times as the number of soil moisture keys in the logger. That means that we need a variable to store the last time that it has been averaged to avoid data duplication. ",
+          "layoutX": 504,
+          "layoutY": 740
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch lastSoilMoistureAverageTimestamp",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "lastSoilMoistureAverageTimestamp"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1133,
+          "layoutY": 733
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "initialize last soil moisture average",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "var newMsg = {};\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nnewMsg.lastSoilMoistureAverageTimestamp = 0;\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2220,
+          "layoutY": 649
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Incorrect Config",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Incorrect Configuration Alarm Alarm",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 4029,
+          "layoutY": 1506
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Incorrect Config",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Incorrect Configuration Alarm Alarm",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 927,
+          "layoutY": 483
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Incorrect Config",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Incorrect Configuration Alarm Alarm",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1129,
+          "layoutY": 1210
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Incorrect Config",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Incorrect Configuration Alarm Alarm",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3264,
+          "layoutY": 989
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06",
+            "Soil Vol Water Content 07",
+            "Soil Vol Water Content 08",
+            "Soil Vol Water Content 09"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3264,
+          "layoutY": 1057
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06",
+            "Soil Vol Water Content 07",
+            "Soil Vol Water Content 08",
+            "Soil Vol Water Content 09",
+            "Soil Vol Water Content 10"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3262,
+          "layoutY": 1132
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06",
+            "Soil Vol Water Content 07",
+            "Soil Vol Water Content 08",
+            "Soil Vol Water Content 09",
+            "Soil Vol Water Content 10",
+            "Soil Vol Water Content 11"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3260,
+          "layoutY": 1207
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06",
+            "Soil Vol Water Content 07",
+            "Soil Vol Water Content 08",
+            "Soil Vol Water Content 09",
+            "Soil Vol Water Content 10",
+            "Soil Vol Water Content 11",
+            "Soil Vol Water Content 12"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since there is a possibility that the messages will be received one at a time, and the logger will have an unknown number of messages, its better to only do the rest of the post processing if the message that came has the relevant telemetry. In any other way the postprocessing would have to trigger like 30 times. ",
+          "layoutX": 2504,
+          "layoutY": 1484
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "check for rain message",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (msg.hasOwnProperty(metadata.ss_nameOfRainTicksKey))\n{\n    return true;\n}\n\nreturn false;\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "calculate the current Julian date number. Updates the min and max temperature if the value of the new telemetry is less than the min and more than the max. ",
+          "layoutX": 2836,
+          "layoutY": 1483
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Calculate Rain Level",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\n\nvar nameOfTemperatureKey = metadata.ss_nameOfTemperatureKey;\nvar nameOfRainTicksKey = metadata.ss_nameOfRainTicksKey;\n\n//select the temperature either from the meteorological sensor, or the bme\nif (msg.hasOwnProperty(nameOfRainTicksKey))\n{\n    var ticks = parseFloat(msg[nameOfRainTicksKey])\n    var rainLevel = parseFloat(metadata.ss_rainPerTick) * ticks;\n    newMsg.rainLevel = parseFloat(rainLevel.toFixed(3));\n}\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 3194,
+          "layoutY": 1487
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save Calculated values as Timeseries",
+        "debugMode": true,
+        "configuration": {
+          "defaultTTL": 63072000,
+          "skipLatestPersistence": null,
+          "useServerTs": null
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 4145,
+          "layoutY": 942
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "soil moisture sensor timeout",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "General Alarm",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "Calculates average Soil Moisture, and some other stuff",
+          "layoutX": 4147,
+          "layoutY": 1042
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Calculate Soil Moisture Average",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//requires the field configuration data as well as\n//ss_fieldCapacity\n//ss_wettedArea\n//ss_soilMoistureThresshold\n//ss_dischargeRate\nvar m_to_cm = 100;\n\nvar fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\nvar rootzoneDepth_cm = parseFloat(metadata.ss_rootDepthSum_m) * m_to_cm;\nvar latestSoilMoistureTimestamp = 0;\n\nvar newMsg = {};\n\n\nvar cropsNumber = Object.keys(fieldConfiguration.groupsArray).length;\n//only one group right now\nvar index = 0;\n\nvar averageSoilMoisture = 0;  //will store the multiplication of the thickness of the soil \nvar averageSoilMoistureSummary = 0; //will store the sum of the averageSoilMoisture\n\n//get the name of the root object. it will be used to select the sensor array\nvar name = Object.keys(fieldConfiguration.groupsArray[index]);\n\n//get number of sensors on that group.\nvar numberOfSensors = Object.keys(fieldConfiguration.groupsArray[index][name].sensorArray).length;\n\n\n//loop to calculate the averages\nfor (var sensorIndex = 0; sensorIndex < numberOfSensors; sensorIndex++) \n{\n    var sensor = fieldConfiguration.groupsArray[index][name].sensorArray[sensorIndex];\n    //get the name of the measurement. it should correspond with the name of the measurement from the logger. \n    var measurementName = sensor.meas;\n    \n    //no need to check that the property exists, since this is guarranted from the previous node. \n    var sensorSoilThickness = parseFloat(sensor.soil_thickness) * m_to_cm * parseFloat(sensor.weight);\n    \n    //this will pull the \"SoilMoisture01\": \"{\\\"ts\\\":1654681764417,\\\"value\\\":22.3}\" format\n    var curSensorFromMetadata = JSON.parse(metadata[measurementName]); \n\n    averageSoilMoisture += sensorSoilThickness * parseFloat(curSensorFromMetadata.value)\n    \n    //store also the timestamp\n    latestSoilMoistureTimestamp = parseInt(curSensorFromMetadata.ts);\n}\n\n//summarise the total of all the measurements of each sensors in this group. \naverageSoilMoistureSummary += averageSoilMoisture;\n\n//and calculate the summary dividing by the total thickness. \nvar averageSM = averageSoilMoistureSummary / rootzoneDepth_cm;\n\n//finaly generate the new entry\n\nnewMsg[name + \"_AverageSoilMoisture\"] = parseFloat(averageSM.toFixed(3));\n//-----------process 3\n\nvar maxIrrigation_mm = 0;\n\nvar temp = 0.1 * (parseFloat(metadata.ss_fieldCapacity) - averageSM) * rootzoneDepth_cm;\nif (temp < 0)\n{\n    maxIrrigation_mm = 0;\n}\nelse\n{\n    maxIrrigation_mm = temp * (parseFloat(metadata.ss_wettedAreaFraction));\n}\n\nvar maxIrrigation_hr = maxIrrigation_mm * parseFloat(metadata.ss_fieldArea) / parseFloat(metadata.ss_dischargeRate);\nvar roundMaxIrrugation_hr = Math.floor(maxIrrigation_hr);\nnewMsg.roundMaxIrrugation_hr = roundMaxIrrugation_hr;\nvar maxIrrigation_hrmin = roundMaxIrrugation_hr + (maxIrrigation_hr - roundMaxIrrugation_hr) * (60.0 / 100.0);\nvar irrigationRequired = averageSM <= parseFloat(metadata.ss_soilMoistureThreshold);\n\nnewMsg[name + \"_maxIrrigation_mm\"] = parseFloat(maxIrrigation_mm.toFixed(3));\nnewMsg[name + \"_maxIrrigation_hr\"] = parseFloat(maxIrrigation_hr.toFixed(3));\nnewMsg[name + \"_maxIrrigation_hrmin\"] = parseFloat(maxIrrigation_hrmin.toFixed(3));\nnewMsg[name + \"_irrigationRequired\"] = irrigationRequired;\n\n//also store the timestamp \nnewMsg.latestSoilMoistureTimestamp = latestSoilMoistureTimestamp;\n\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "This is to calculate the wetted area ratio. So, we need to trigger this calculation only when the update is related to the fieldArea or wettedArea.",
+          "layoutX": 224,
+          "layoutY": 874
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "verify that the update is related to fieldArea and wettedArea",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (msg.hasOwnProperty('fieldArea') || msg.hasOwnProperty('wettedArea'))\n{\n    return true;\n}\nreturn false;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "on a new device the julianDayNumber doesn't exist, so we need to initialize it. to calculate the rest of the values that are bound to that variable. ",
+          "layoutX": 506,
+          "layoutY": 656
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch day for initialization",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "julianDayNumber"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1136,
+          "layoutY": 659
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Calculate initial julian day number",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "var newMsg = {};\n\n//if the previous node failed, that means that julian day number wasn't available, ie, this is the first time that the device is ininialized. \n\n//helper functions\n//returns true if the year is leap.\nDate.prototype.isLeapYear = function ()\n{\n    var year = this.getFullYear();\n    if ((year & 3) != 0) return false;\n    return ((year % 100) != 0 || (year % 400) == 0);\n};\n\n// Get Day of Year\nDate.prototype.getDOY = function ()\n{\n    //array that holds the day count on each month\n    var dayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];\n    var mn = this.getMonth();\n    var dn = this.getDate();\n    var dayOfYear = dayCount[mn] + dn;\n    //increase by one if the year is leap. \n    if (mn > 1 && this.isLeapYear()) \n    {\n        dayOfYear++;\n    }\n    return dayOfYear;\n};\n\nfunction DegToRad(degrees)\n{\n    return degrees * (Math.PI / 180.0);\n}\n\n\nvar currentDate = new Date();\nnewMsg.julianDayNumber = currentDate.getDOY();\n\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 828,
+          "layoutY": 1081
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "fetch day and location",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "julianDayNumber",
+            "latitude"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1127,
+          "layoutY": 1080
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "calculate solar properties",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "function DegToRad(degrees)\n{\n    return degrees * (Math.PI / 180.0);\n}\n\nvar newMsg = {};\n\n\n//also calculate the solar declination and some other things\n//---calculate solar properties\n//The following equation can be used to calculate the declination angle: δ=−23.45°×cos(360/365×(d+10)) \n// where  the d is the number of days since the start of the year The declination angle equals zero at the equinoxes \n//(March 22 and September 22), positive during the summer in northern hemisphere and negative during winter in the northern hemisphere. \n//The declination reaches a maximum angle on June 22 which is 23.45°  (the northern hemisphere summer solstice) and a minimum angle  \n//on December 21-22 which is of -23.45° (the northern hemisphere winter solstice). \n//In the above equation, the +10 is due to the fact that the winter solstice occurs before the start of the year.\n// The equation also assumes the orbit of the sun to be a perfect circle and the fraction of 360/365 \n//converts the number of days to the position in the orbit. The apparent northward movement of the Sun during the northern spring,\n// reaching the celestial equator during the March equinox. The declination reaches a maximum angle equal to the axial \n//tilt of the Earth's axial tilt (23.44°) on the June solstice, then starts decreasing until  reaching its minimum (−23.44°) \n//on the December solstice, where its value is equal to the negative of the axial tilt. Seasons are a direct product of this variation.\n\n//---calculate latitude in rad\nvar latitude_rad = DegToRad(parseFloat(metadata.ss_latitude));\n\nvar solarDeclination_rad = DegToRad(-23.45) * Math.cos(DegToRad(360.0 / 365.0 * (parseInt(metadata.ss_julianDayNumber) + 10)));\nvar sunsetHourNumber_rad = Math.acos(-Math.tan(latitude_rad) * Math.tan(solarDeclination_rad));\n\nvar solarConstant_MJM2min = 0.082;\nvar inverseRelativeDistanceEarthSun = 1 + 0.033 * Math.cos(((2 * Math.PI) / 365) * parseInt(metadata.ss_julianDayNumber));\n\nvar extraterrestrialRadiation_MJm2day = (24 * 60 / Math.PI) * solarConstant_MJM2min * inverseRelativeDistanceEarthSun *\n    ((sunsetHourNumber_rad * Math.sin(latitude_rad) * Math.sin(solarDeclination_rad)) +\n        (Math.cos(latitude_rad) * Math.cos(solarDeclination_rad) * Math.sin(sunsetHourNumber_rad)));\n\n//add them on message        \nnewMsg.latitude_rad = parseFloat(latitude_rad.toFixed(4));\nnewMsg.solarDeclination_rad = parseFloat(solarDeclination_rad.toFixed(4));\nnewMsg.sunsetHourNumber_rad = parseFloat(sunsetHourNumber_rad.toFixed(4));\nnewMsg.extraterrestrialRadiation_MJm2day = parseFloat(extraterrestrialRadiation_MJm2day.toFixed(4));\n\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 225,
+          "layoutY": 1075
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "verify that the update is related to the latitude",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (msg.hasOwnProperty('latitude'))\n{\n    return true;\n}\nreturn false;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "Check that julian day number exists as server attribute\n",
+          "layoutX": 2461,
+          "layoutY": 1716
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Location - day - memory",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "julianDayNumber",
+            "memory",
+            "nameOfTemperatureKey",
+            "latitude",
+            "rainPerTick",
+            "nameOfRainTicksKey"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "calculate the current Julian date number. Updates the min and max temperature if the value of the new telemetry is less than the min and more than the max. ",
+          "layoutX": 2816,
+          "layoutY": 1712
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "update memory",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\n//---------------calculate day of the year-----------------------\n\n//helper functions\n//returns true if the year is leap.\nDate.prototype.isLeapYear = function ()\n{\n    var year = this.getFullYear();\n    if ((year & 3) != 0) return false;\n    return ((year % 100) != 0 || (year % 400) == 0);\n};\n\n// Get Day of Year\nDate.prototype.getDOY = function ()\n{\n    //array that holds the day count on each month\n    var dayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];\n    var mn = this.getMonth();\n    var dn = this.getDate();\n    var dayOfYear = dayCount[mn] + dn;\n    //increase by one if the year is leap. \n    if (mn > 1 && this.isLeapYear()) \n    {\n        dayOfYear++;\n    }\n    return dayOfYear;\n};\n\nfunction DegToRad(degrees)\n{\n    return degrees * (Math.PI / 180.0);\n}\n\nvar currentDate = new Date();\nnewMsg.julianDayNumber = currentDate.getDOY();\n\n//---------------update memory---------------------\n\nvar nameOfTemperatureKey = metadata.ss_nameOfTemperatureKey;\nvar nameOfRainTicksKey = metadata.ss_nameOfRainTicksKey;\n\n//select the temperature either from the meteorological sensor, or the bme\nif ((msg.hasOwnProperty(nameOfTemperatureKey) || msg.hasOwnProperty(nameOfRainTicksKey)))\n{\n    var memoryJSON = JSON.parse(metadata.ss_memory);\n    //update the values for the next cycle\n    //start by updating the temperature when that telemetry arrives\n    if (msg.hasOwnProperty(nameOfTemperatureKey))\n    {\n        var temperature = parseFloat(msg[nameOfTemperatureKey]);\n        //update the min and max values for the next loop. \n        if (temperature < parseFloat(memoryJSON.currentTemperatureMin))\n        {\n            memoryJSON.currentTemperatureMin = temperature;\n        }\n        \n        if (temperature > parseFloat(memoryJSON.currentTemperatureMax))\n        {\n            memoryJSON.currentTemperatureMax = temperature;\n        }\n        \n        //also store the last measurement. This is because when we reset\n        //the memory on the day change, we would not know which value to use. \n        memoryJSON.lastTemperatureMeasurement = temperature;\n    }\n    //continue by updating the rain\n    if (msg.hasOwnProperty(nameOfRainTicksKey))\n    {\n        var ticks = parseFloat(msg[nameOfRainTicksKey]);\n        memoryJSON.rainTicksSummary = parseFloat(memoryJSON.rainTicksSummary) + ticks;\n    }\n\n    //stringify so you can store it. \n    var memory = JSON.stringify(memoryJSON);\n    newMsg.memory = memory;\n}\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "store the update memory object",
+          "layoutX": 3468,
+          "layoutY": 1758
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Memory",
+        "debugMode": true,
+        "configuration": {
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "convert memory to post attributes request",
+          "layoutX": 3135,
+          "layoutY": 1757
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "convert memory to save attribute request",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\n//extract the memory from the message\nif (msg.hasOwnProperty(\"memory\"))\n{\n    newMsg.memory = msg.memory;\n}\n\nnewMsg.julianDayNumber = msg.julianDayNumber;\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3267,
+          "layoutY": 921
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06",
+            "Soil Vol Water Content 07",
+            "Soil Vol Water Content 08"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3033,
+          "layoutY": 1133
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2763,
+          "layoutY": 926
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
+        "name": "fetch Device Id",
+        "debugMode": true,
+        "configuration": {
+          "fieldsMapping": {
+            "id": "deviceId",
+            "type": "originatorType"
+          }
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 3878,
+          "layoutY": 1081
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "SoilSensorsOkAndRecent",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "function nextRelation(metadata, msg) \n{\n    var fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\n    var minutesOffset = 5;\n    var transmissionDurationLimit_ms = (parseFloat(metadata.ss_transmissionDuration_m) + minutesOffset) * 60000;\n    var lastSoilMoistureAverageTimestamp_s = Math.round(parseInt(metadata.ss_lastSoilMoistureAverageTimestamp) / 1000);\n    \n    //this works only for the first crop right now\n    var index = 0;\n    \n    //get the name of the root object. it will be used to select the sensor array\n    var name = Object.keys(fieldConfiguration.groupsArray[index]);\n    \n    \n    //get number of sensors on that group.\n    var numberOfSensors = Object.keys(fieldConfiguration.groupsArray[index][name].sensorArray).length;\n    \n    var timestamp = 0;\n    //first lets check if the keys are available\n    for (var sensorIndex = 0; sensorIndex < numberOfSensors; sensorIndex++) \n    {\n        var sensor = fieldConfiguration.groupsArray[index][name].sensorArray[sensorIndex];\n        //check if the sensor key exists on the metadata.\n        //It should be there 100% since we have success status on the previous node as a requirement to execute this node,\n        //but better be extra safe\n        if (!metadata.hasOwnProperty(sensor.meas))\n        {\n            return ['doesnt exist']\n        }\n    \n        //from the first sensor onward start checking the timestamp by comparing it with the previous sensor. \n        if (sensorIndex >= 1)\n        {\n            //the name of the sensor exists at the metadata at this point 100% so fetch it\n            \n            //var sensorA = JSON.parse(\"{\\\"ts\\\":1654681764417,\\\"value\\\":22.3}\"); \n            var sensorA = JSON.parse(metadata[sensor.meas]);\n    \n            //also fetch the previous sensor for comparison. \n            var sensorTemp = fieldConfiguration.groupsArray[index][name].sensorArray[sensorIndex - 1];\n            var sensorB = JSON.parse(metadata[sensorTemp.meas]);\n            var timestampA = Math.round(parseInt(sensorA.ts) / 1000); //avoid an ms comparison. convert them to seconds using int division.\n            var timestampB = Math.round(parseInt(sensorB.ts) / 1000);\n            if (timestampA !== timestampB)\n            {\n                return ['different timestamps']\n            }\n            //save the timestamp so we can use it out of the loop.\n            timestamp = timestampA;\n        }\n    }\n    //if we reached that point, all the sensors have the same timestamp, so\n    //check that the timestamp is recent enough\n    var currentDate = new Date()\n    var currentTimeDifference = currentDate.getTime() - (timestamp * 1000);\n    if (currentTimeDifference >= transmissionDurationLimit_ms)\n    {\n        return ['sensor timeout'];\n    }\n    \n    //finaly check that this average hasn't been already stored\n    //if the timestamp is the same (or less) than the last time that the average has been stored\n    //it means that the value has already been stored, so return false\n    if (timestamp <= lastSoilMoistureAverageTimestamp_s)\n    {\n        return ['already performed'];\n    }\n\n    return ['OK'];\n}\n\nreturn nextRelation(metadata, msg);"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3033,
+          "layoutY": 1059
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3040,
+          "layoutY": 987
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3039,
+          "layoutY": 918
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3039,
+          "layoutY": 854
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3259,
+          "layoutY": 847
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06",
+            "Soil Vol Water Content 07"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2764,
+          "layoutY": 1195
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "switch number of sensors",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "function nextRelation(metadata, msg) \n{\n        \n    //fetch the name of the sensors\n    var fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\n    \n    //this works only for the first crop right now\n    var index = 0;\n    \n    //get the name of the root object. it will be used to select the sensor array\n    var name = Object.keys(fieldConfiguration.groupsArray[index]);\n    \n    //get number of sensors on that group.\n    var numberOfSensors = Object.keys(fieldConfiguration.groupsArray[index][name].sensorArray).length;\n    return switchResult (numberOfSensors);\n}\n\n\nfunction switchResult(value)\n{\n    switch(value) \n    {\n      case 1:\n            return ['one'];\n      case 2:\n            return ['two'];\n      case 3:\n            return ['three'];\n      case 4:\n            return ['four'];\n      case 5:\n            return ['five'];\n      case 6:\n            return ['six'];\n      case 7:\n            return ['seven'];\n      case 8:\n            return ['eight'];\n      case 9:\n            return ['nine'];\n      case 10:\n            return ['ten'];\n      case 11:\n            return ['eleven'];\n      case 12:\n            return ['twelve'];\n      default:\n        return ['error'];\n    }\n}\n\n\nreturn nextRelation(metadata, msg);"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo at first we need to fetch the latest values that we received from the soil moisture sensors.  On this particular node failure is not reported, so this has to be handled later down the line. Fetch transmissionDuration, Fetch root zone to calculate the average soil moisture",
+          "layoutX": 3036,
+          "layoutY": 1207
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Soil Moisture Telemetry",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "transmissionDuration_m",
+            "rootDepthSum_m",
+            "fieldCapacity",
+            "wettedArea",
+            "dischargeRate",
+            "soilMoistureThreshold",
+            "wettedAreaFraction",
+            "fieldArea"
+          ],
+          "latestTsKeyNames": [
+            "Soil Vol Water Content 01",
+            "Soil Vol Water Content 02",
+            "Soil Vol Water Content 03",
+            "Soil Vol Water Content 04",
+            "Soil Vol Water Content 05",
+            "Soil Vol Water Content 06"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since the messages are not coming at the same time, this means that the soil moisture averaging will be triggered multiple times, and more specifically the same number of times as the number of soil moisture keys in the logger. That means that we need a variable to store the last time that it has been averaged to avoid data duplication. ",
+          "layoutX": 505,
+          "layoutY": 811
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch averageSoilMoistureAtPreviousDayChange",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "averageSoilMoistureAtPreviousDayChange"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1123,
+          "layoutY": 800
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "initialize averageSoil Moisture At Previous Day Change",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "var newMsg = {};\n\n//change type to post attributes\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nnewMsg.averageSoilMoistureAtPreviousDayChange = 0;\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since there is a possibility that the messages will be received one at a time, and the logger will have an unknown number of messages, its better to only do the rest of the post processing if the message that came has the relevant telemetry. In any other way the postprocessing would have to trigger like 30 times. ",
+          "layoutX": 2542,
+          "layoutY": 1048
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "check if the keys exist on the message.",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//fetch the name of the sensors\nvar fieldConfiguration = JSON.parse(metadata.ss_fieldConfiguration);\n\n//this works only for the first crop right now\nvar index = 0;\n\n//get the name of the root object. it will be used to select the sensor array\nvar name = Object.keys(fieldConfiguration.groupsArray[index]);\n\n//get number of sensors on that group.\nvar numberOfSensors = Object.keys(fieldConfiguration.groupsArray[index][name].sensorArray).length;\n\n//first lets check if the keys are available\nfor (var sensorIndex = 0; sensorIndex < numberOfSensors; sensorIndex++) \n{\n    var sensor = fieldConfiguration.groupsArray[index][name].sensorArray[sensorIndex];\n    //check if the sensor key exists on the message\n    //if the message has the sensor key, we can do more post processing downstream.\n    if (msg.hasOwnProperty(sensor.meas))\n    {\n        return true;\n    }\n}\nreturn false;\n"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "One major problem is that the data is coming one telemetry key value pair at the time. So there is no way to do any meaningfull calculation as it is.\nSo we need to find the name of the sensors that are reporting soil moisture",
+          "layoutX": 2150,
+          "layoutY": 1032
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch Names of Soil Moisture Sensors",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "fieldConfiguration",
+            "nameOfRainTicksKey",
+            "rainPerTick",
+            "latestSoilMoistureTimestamp",
+            "soilMoistureLowLimit",
+            "soilMoistureHighLimit",
+            "soilTemperatureLowLimit",
+            "soilTemperatureHighLimit"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "this will convert critical dates to julian date numbers. So only trigger this calculation then the attributes are relevant. ",
+          "layoutX": 227,
+          "layoutY": 944
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "verify that the update is related to the critical dates",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (msg.hasOwnProperty('dayStartInitialStage') || \n    msg.hasOwnProperty('dayStartDevelopmentStage') || \n    msg.hasOwnProperty('dayStartMidSeason') || \n    msg.hasOwnProperty('dayEndMidSeason') || \n    msg.hasOwnProperty('dayEndLateSeason'))\n{\n    return true;\n}\nreturn false;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 224,
+          "layoutY": 1006
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "verify that the update is related to the fieldConfiguration",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (msg.hasOwnProperty('fieldConfiguration'))\n{\n    return true;\n}\nreturn false;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "some of the values that were calculated on the previous nodes have to be saved as attributes, so this nodes seperates them. ",
+          "layoutX": 4073,
+          "layoutY": 1671
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "calculate evapotransporations",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "/* at this point we have a message on the chain which has has the following properties\n{\n    \"julianDayNumber\": 206,\n    \"solarDeclination_rad\": 0.3431,\n    \"sunsetHourNumber_rad\": 1.8228,\n    \"extraterrestrialRadiation_MJm2day\": 40.0462,\n    \"minTemperature\": 18.2,\n    \"maxTemperature\": 39.3,\n    \"temperatureMean\": 28.75,\n    \"precipitationLevel_mm\": null,\n}\n\nwe also have the following metadata. \nsince we pulled the julianDayNumber and the extretterestial radiation from the database now before saving the updated values, \nwe have the calculated values from the previous day, so we can use them on the calculations. \n{\n    \"deviceName\": \"3 Pro Irrigation V4\",\n    \"deviceType\": \"3 pro irrigation v4\",\n    \"ss_memory\": \"{\\\"currentTemperatureMin\\\":18.2,\\\"currentTemperatureMax\\\":39.3,\\\"rainTicksSummary\\\":0}\",\n    \"ss_nameOfTemperatureKey\": \"Ambient Temperature\",\n    \"ts\": \"1658757779401\"\n\n    \"Crop1_AverageSoilMoisture\": \"{\\\"ts\\\":1658757779401,\\\"value\\\":26.773}\",\n    \"ss_extraterrestrialRadiation_MJm2day\": \"40.4648\",\n    \"ss_julianDayNumber\": \"205\",\n    \"ss_latitude\": \"34.9118\",\n    \"ss_solarDeclination_rad\": \"0.3431\",\n    \"ss_sunsetHourNumber_rad\": \"1.8289\",\n    \"ss_dayStartInitialStage_JDN\":\"\",\n    \"ss_dayStartDevelopmentStage_JDN\":\"\",\n    \"ss_dayStartMidSeason_JDN\":\"\",\n    \"ss_dayEndMidSeason_JDN\":\"\",\n    \"ss_dayEndLateSeason_JDN\":\"\",\n    \"ss_cropCoefficientInitial\":\"\",\n    \"ss_cropCoefficientMid\":\"\",\n    \"ss_cropCoefficientEnd\":\"\",\n    \"ss_previousAverageSoilMoisture\":\"\",\n    \"ss_rootDepthSum_m\":\"\",\n    \"ss_wettedAreaFraction\"\":\"\";\n}\n\nwe also pulled the \nCrop1_AverageSoilMoisture \n\nwe need to also find the solar declination rad and sunset hour number rad, as well as the extraterrestial radiation for for the previous day. \nwe have pulled this from the database before saving the new values. \n*/\n\nfunction linearInterpolation(x, x1, x2, y1, y2)\n{\n    return (y1 + (x - x1) * ( (y2 - y1) / (x2 - x1) ));\n}\n\n\nfunction digitsFormat(value, numberOfDigits)\n{\n    return parseFloat(value.toFixed(numberOfDigits));\n}\n\n\n//calculate ETo_mm\nvar extraterrestrialRadiationPreviousDay_MJm2day = parseFloat(metadata.ss_extraterrestrialRadiation_MJm2day);\nvar temperatureMean = parseFloat(msg.temperatureMean);\nvar temperatureMax = parseFloat(msg.maxTemperature);\nvar temperatureMin = parseFloat(msg.minTemperature);\n\nvar ETo_mm = 0.0023 * (temperatureMean + 17.8) * \n             Math.sqrt(temperatureMax - temperatureMin) * \n             0.408 * extraterrestrialRadiationPreviousDay_MJm2day;\n \n \n//calculate actual crop resultCropCoefficient             \n//parsed variables\nvar previous_JDN = parseInt(metadata.ss_julianDayNumber);\n\nvar dayStartInitialStage_JDN = parseInt(metadata.ss_dayStartInitialStage_JDN);\nvar dayStartDevelopmentStage_JDN = parseInt(metadata.ss_dayStartDevelopmentStage_JDN);\nvar dayStartMidSeason_JDN = parseInt(metadata.ss_dayStartMidSeason_JDN);\nvar dayEndMidSeason_JDN = parseInt(metadata.ss_dayEndMidSeason_JDN);\nvar dayEndLateSeason_JDN = parseInt(metadata.ss_dayEndLateSeason_JDN);\nvar cropCoefficientInitial = parseFloat(metadata.ss_cropCoefficientInitial);\nvar cropCoefficientMid = parseFloat(metadata.ss_cropCoefficientMid);\nvar cropCoefficientEnd = parseFloat(metadata.ss_cropCoefficientEnd);\n             \nvar resultCropCoefficient = 0;\n\nif (previous_JDN < dayStartInitialStage_JDN)\n{\n    resultCropCoefficient = 0;\n}\nelse if (previous_JDN <= dayStartDevelopmentStage_JDN)\n{\n    resultCropCoefficient = cropCoefficientInitial;\n}\nelse if (previous_JDN <= dayStartMidSeason_JDN)\n{\n    resultCropCoefficient = linearInterpolation(previous_JDN, dayStartDevelopmentStage_JDN, dayStartMidSeason_JDN, cropCoefficientInitial, cropCoefficientMid);\n}\nelse if (previous_JDN <= dayEndMidSeason_JDN)\n{\n    resultCropCoefficient = cropCoefficientMid;\n}\nelse if (previous_JDN <= dayEndLateSeason_JDN)\n{\n    resultCropCoefficient = linearInterpolation(previous_JDN, dayEndMidSeason_JDN, dayEndLateSeason_JDN, cropCoefficientMid, cropCoefficientEnd);\n}\nelse\n{\n    resultCropCoefficient = 0;\n}\n\n//calculate ETc_mm, whatever is this\nvar ETc_mm = resultCropCoefficient * ETo_mm;\n\n//add the results to the message\n\nmsg.cropEvapotranspiration_mm = parseFloat(ETc_mm.toFixed(2));\nmsg.referenceEvapotranspiration_mm = parseFloat(ETo_mm.toFixed(2));\nmsg.resultCropCoefficient = parseFloat(resultCropCoefficient.toFixed(2));\n\nvar averageSoilMoistureAtDayChange;\nvar maxIrrigation_hrAtDayChange;\nvar maxIrrigation_hrminAtDayChange;\nvar irrigationRequiredStatusAtDayChange;\n\n//pull the daily soil moisture summary\nif (metadata.hasOwnProperty('Crop1_AverageSoilMoisture'))\n{\n    averageSoilMoistureAtDayChange = JSON.parse(metadata.Crop1_AverageSoilMoisture);\n    msg.averageSoilMoistureAtDayChange = parseFloat(averageSoilMoistureAtDayChange.value.toFixed(2));\n}\n\nif (metadata.hasOwnProperty('Crop1_maxIrrigation_hr'))\n{\n    maxIrrigation_hrAtDayChange = JSON.parse(metadata.Crop1_maxIrrigation_hr); \n    msg.maxIrrigation_hrAtDayChange = parseFloat(maxIrrigation_hrAtDayChange.value.toFixed(2));\n}\n\nif (metadata.hasOwnProperty('Crop1_maxIrrigation_hrmin'))\n{\n    maxIrrigation_hrminAtDayChange = JSON.parse(metadata.Crop1_maxIrrigation_hrmin); \n    msg.maxIrrigation_hrminAtDayChange = parseFloat(maxIrrigation_hrminAtDayChange.value.toFixed(2));\n}\n\nif (metadata.hasOwnProperty('Crop1_irrigationRequired'))\n{\n    irrigationRequiredStatusAtDayChange = JSON.parse(metadata.Crop1_irrigationRequired); \n    msg.irrigationRequiredStatusAtDayChange = irrigationRequiredStatusAtDayChange.value;\n}\n\n//calculate deltaSoilMoisture\nvar averageSoilMoistureAtPreviousDayChange = parseFloat(metadata.ss_averageSoilMoistureAtPreviousDayChange);\nvar deltaSoilMoisture = 0.1 * (msg.averageSoilMoistureAtDayChange - averageSoilMoistureAtPreviousDayChange) * parseFloat(metadata.ss_rootDepthSum_m) * parseFloat(metadata.ss_wettedAreaFraction);\n\nmsg.deltaSoilMoisture = parseFloat(deltaSoilMoisture.toFixed(2));\n\n//get the error margins for metadata. \nvar fcErrorMargin = parseFloat(metadata.ss_fcErrorMargin);\nvar etcErrorMargin = parseFloat(metadata.ss_etcErrorMargin);\nvar fieldCapacity = parseFloat(metadata.ss_fieldCapacity);\nvar soilMoistureThreshold = parseFloat(metadata.ss_soilMoistureThreshold);\n\n//calculate warning farmer\n//farmer only gets a warning for drainage losses. so a true or false result should be OK. \n//it can then be displayed via a post processing When true display \"Drainage losses, reduce irrigation duration\"\nmsg.warningFarmer = false; //default state. \nif (msg.precipitationLevel_mm == 0 && msg.deltaSoilMoisture > 0 && msg.averageSoilMoistureAtDayChange > fieldCapacity + fcErrorMargin)\n{\n    msg.warningFarmer = true;\n}\n\n\n//calculate warning concultant\n//warning consultant its a bit more complicated. \n//so an enum equivalent must be used. \n//there are 3 possible responses. \"Kc too low or WA-fraction too large\", \"nothing\", \"Kc too high or WA-fraction too small\"\n//0 : nothing\n//1: Kc too low or WA-fraction too large\n//2: Kc too high or WA-fraction too small\nmsg.warningConsultant = 0; //default state\nif (msg.precipitationLevel_mm == 0 &&\n    msg.deltaSoilMoisture < 0.0 &&\n    msg.resultCropCoefficient > 0 &&\n    averageSoilMoistureAtPreviousDayChange < fieldCapacity &&\n    msg.averageSoilMoistureAtDayChange > soilMoistureThreshold)\n{\n    if (Math.abs(msg.deltaSoilMoisture) > (1.0 + etcErrorMargin) * ETc_mm)\n    {\n        msg.warningConsultant = 1;\n    }\n    else if (Math.abs(msg.deltaSoilMoisture) < (1.0 - etcErrorMargin) * ETc_mm)\n    {\n        msg.warningConsultant = 2;\n    }\n}\n\n\nreturn {msg: msg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "now that the day has changed, we need the snapshot of the soil moisture average to do the rest of the calculation, so pull it from the database. \n",
+          "layoutX": 3758,
+          "layoutY": 1673
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Fetch",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "solarDeclination_rad",
+            "sunsetHourNumber_rad",
+            "extraterrestrialRadiation_MJm2day",
+            "dayStartInitialStage_JDN",
+            "dayStartDevelopmentStage_JDN",
+            "dayStartMidSeason_JDN",
+            "dayEndMidSeason_JDN",
+            "dayEndLateSeason_JDN",
+            "cropCoefficientInitial",
+            "cropCoefficientMid",
+            "cropCoefficientEnd",
+            "averageSoilMoistureAtPreviousDayChange",
+            "wettedAreaFraction",
+            "rootDepthSum_m",
+            "fcErrorMargin",
+            "etcErrorMargin",
+            "fieldCapacity",
+            "soilMoistureThreshold"
+          ],
+          "latestTsKeyNames": [
+            "Crop1_AverageSoilMoisture",
+            "Crop1_maxIrrigation_hr",
+            "Crop1_maxIrrigation_hrmin",
+            "Crop1_irrigationRequired"
+          ],
+          "getLatestValueWithTs": true
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 4796,
+          "layoutY": 1107
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save Calculated values as Timeseries",
+        "debugMode": true,
+        "configuration": {
+          "defaultTTL": 63072000,
+          "skipLatestPersistence": null,
+          "useServerTs": null
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "some of the values that were calculated on the previous nodes have to be saved as telemetry so this nodes seperates them. ",
+          "layoutX": 4482,
+          "layoutY": 1115
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "seperate telemetry",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\nnewMsg = msg;\n\n//only remove the latestSoilMoistureTimestamp and keep the rest of the properties\ndelete newMsg.latestSoilMoistureTimestamp;\n\nvar msgType = \"POST_TELEMETRY_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "some of the values that were calculated on the previous nodes have to be saved as attributes, so this nodes seperates them. ",
+          "layoutX": 4478,
+          "layoutY": 1045
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Seperate attributes",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\n//only keep the timestamp\nnewMsg.latestSoilMoistureTimestamp = msg.latestSoilMoistureTimestamp;\n\nvar msgType = \"POST_ATTRIBUTES_REQUEST\";\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 4792,
+          "layoutY": 1046
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Calculated Server Attributes",
+        "debugMode": true,
+        "configuration": {
+          "scope": "SERVER_SCOPE",
+          "notifyDevice": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "if the date has changed, then returns true so that the relevant calculations are performed. ",
+          "layoutX": 3135,
+          "layoutY": 1683
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Verify That the date has changed",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "//return true if the day has changed in comparison to the saved date\nif (parseInt(metadata.ss_julianDayNumber) != parseInt(msg.julianDayNumber))\n{\n    return true;\n}\nreturn false;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "since date has changed, this nodes updates the values that are bound to that variable, like the solarDeclination, sunsetHourNumber, and extraterrestialRadiation.",
+          "layoutX": 3420,
+          "layoutY": 1681
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "do the rest of the calculations",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "function DegToRad(degrees)\n{\n    return degrees * (Math.PI / 180.0);\n}\n\n\n//create an empty object which will be used to store the final result. \nvar newMsg = {}; //empty object\n\n//at this point we have the memory as well as the julian daty number on the message, as well as some metadata values. \n\n//keep the new day number so we can update that attribute later. \nnewMsg.julianDayNumber = msg.julianDayNumber;\n\n//also calculate the solar declination and some other things\n//---calculate solar properties\n//The following equation can be used to calculate the declination angle: δ=−23.45°×cos(360/365×(d+10)) \n// where  the d is the number of days since the start of the year The declination angle equals zero at the equinoxes \n//(March 22 and September 22), positive during the summer in northern hemisphere and negative during winter in the northern hemisphere. \n//The declination reaches a maximum angle on June 22 which is 23.45°  (the northern hemisphere summer solstice) and a minimum angle  \n//on December 21-22 which is of -23.45° (the northern hemisphere winter solstice). \n//In the above equation, the +10 is due to the fact that the winter solstice occurs before the start of the year.\n// The equation also assumes the orbit of the sun to be a perfect circle and the fraction of 360/365 \n//converts the number of days to the position in the orbit. The apparent northward movement of the Sun during the northern spring,\n// reaching the celestial equator during the March equinox. The declination reaches a maximum angle equal to the axial \n//tilt of the Earth's axial tilt (23.44°) on the June solstice, then starts decreasing until  reaching its minimum (−23.44°) \n//on the December solstice, where its value is equal to the negative of the axial tilt. Seasons are a direct product of this variation.\n\n//---calculate latitude in rad\nvar latitude_rad = DegToRad(parseFloat(metadata.ss_latitude));\n\nvar solarDeclination_rad = DegToRad(-23.45) * Math.cos(DegToRad(360.0 / 365.0 * (newMsg.julianDayNumber + 10)));\nvar sunsetHourNumber_rad = Math.acos(-Math.tan(latitude_rad) * Math.tan(solarDeclination_rad));\n\nvar solarConstant_MJM2min = 0.082;\nvar inverseRelativeDistanceEarthSun = 1 + 0.033 * Math.cos(((2 * Math.PI) / 365) * newMsg.julianDayNumber);\n\nvar extraterrestrialRadiation_MJm2day = (24 * 60 / Math.PI) * solarConstant_MJM2min * inverseRelativeDistanceEarthSun *\n    ((sunsetHourNumber_rad * Math.sin(latitude_rad) * Math.sin(solarDeclination_rad)) +\n        (Math.cos(latitude_rad) * Math.cos(solarDeclination_rad) * Math.sin(sunsetHourNumber_rad)));\n\n//add them on message        \nnewMsg.solarDeclination_rad = parseFloat(solarDeclination_rad.toFixed(4));\nnewMsg.sunsetHourNumber_rad = parseFloat(sunsetHourNumber_rad.toFixed(4));\nnewMsg.extraterrestrialRadiation_MJm2day = parseFloat(extraterrestrialRadiation_MJm2day.toFixed(4));\n//also add the julian date \n\n/*now its the time to calculate the min max temperatures.*/\n//since the day has changed, the only thing to do is to pull out the current min and max values.\nvar memoryJSON = JSON.parse(metadata.ss_memory);\n\nnewMsg.minTemperature = parseFloat(memoryJSON.currentTemperatureMin);\nnewMsg.minTemperature = parseFloat(newMsg.minTemperature.toFixed(2));\n\nnewMsg.maxTemperature = parseFloat(memoryJSON.currentTemperatureMax);\nnewMsg.maxTemperature = parseFloat(newMsg.maxTemperature.toFixed(2));\n\nnewMsg.temperatureMean = (newMsg.minTemperature + newMsg.maxTemperature) / 2.0\nnewMsg.temperatureMean = parseFloat(newMsg.temperatureMean.toFixed(2));\n\n//update precipitation level per day.\nnewMsg.precipitationLevel_mm = parseFloat(memoryJSON.rainTicksSummary) * parseFloat(metadata.ss_rainPerTick);\nnewMsg.precipitationLevel_mm = parseFloat(newMsg.precipitationLevel_mm.toFixed(2));\n       \n//cleanup\nnewMsg.minTemperature = parseFloat(newMsg.minTemperature.toFixed(2));\nnewMsg.maxTemperature = parseFloat(newMsg.maxTemperature.toFixed(2));\nnewMsg.temperatureMean = parseFloat(newMsg.temperatureMean.toFixed(2));\nnewMsg.precipitationLevel_mm = parseFloat(newMsg.precipitationLevel_mm.toFixed(2));\n\n//finaly since the day has changed, we need to reset the memoryJSON\nnewMsg.memory = {\n    //initialize as the last measurement, so even if no measurents were performed the rest of the day\n    //it will not report something absurd like -100 or 100°C, \n    \"currentTemperatureMin\": parseFloat(memoryJSON.lastTemperatureMeasurement), \n    \"currentTemperatureMax\": parseFloat(memoryJSON.lastTemperatureMeasurement),\n    \"rainTicksSummary\": 0,\n    \"lastTemperatureMeasurement\": parseFloat(memoryJSON.lastTemperatureMeasurement)\n};\n\n//at this point we have the new message that has the following attributes\n//julianDayNumber\n//sunsetHourNumber_rad\n//extraterrestrialRadiation_MJm2day\n\n//as well as the following values that need to be stored as telemetry\n//minTemperature\n//maxTemperature\n//temperatureMean\n//precipitationLevel_mm\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 3,
+        "toIndex": 2,
+        "type": "True"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 4,
+        "type": "True"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 1,
+        "type": "True"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 0,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 12,
+        "type": "False"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 11,
+        "type": "True"
+      },
+      {
+        "fromIndex": 11,
+        "toIndex": 16,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 13,
+        "toIndex": 14,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 14,
+        "toIndex": 15,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 16,
+        "toIndex": 15,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 17,
+        "toIndex": 13,
+        "type": "True"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 10,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 37,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 19,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 21,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 23,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 24,
+        "toIndex": 19,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 24,
+        "toIndex": 40,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 25,
+        "toIndex": 21,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 25,
+        "toIndex": 40,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 26,
+        "toIndex": 22,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 26,
+        "toIndex": 40,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 27,
+        "toIndex": 23,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 27,
+        "toIndex": 39,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 28,
+        "toIndex": 18,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 28,
+        "toIndex": 56,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 28,
+        "toIndex": 74,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 50,
+        "type": "Attributes Updated"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 50,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 75,
+        "type": "Attributes Updated"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 75,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 76,
+        "type": "Attributes Updated"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 76,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 27,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 71,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 51,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 55,
+        "type": "Attributes Updated"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 55,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 32,
+        "type": "Other"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 29,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 28,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 31,
+        "type": "RPC Request from Device"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 33,
+        "type": "RPC Request to Device"
+      },
+      {
+        "fromIndex": 30,
+        "toIndex": 35,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 34,
+        "toIndex": 30,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 35,
+        "toIndex": 36,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 35,
+        "toIndex": 39,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 36,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 41,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 42,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 43,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 44,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 45,
+        "toIndex": 46,
+        "type": "True"
+      },
+      {
+        "fromIndex": 46,
+        "toIndex": 47,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 49,
+        "toIndex": 81,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 49,
+        "toIndex": 80,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 50,
+        "toIndex": 24,
+        "type": "True"
+      },
+      {
+        "fromIndex": 51,
+        "toIndex": 52,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 51,
+        "toIndex": 39,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 52,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 53,
+        "toIndex": 54,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 53,
+        "toIndex": 40,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 54,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 55,
+        "toIndex": 53,
+        "type": "True"
+      },
+      {
+        "fromIndex": 56,
+        "toIndex": 57,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 56,
+        "toIndex": 38,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 57,
+        "toIndex": 59,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 57,
+        "toIndex": 83,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 59,
+        "toIndex": 58,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 60,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 61,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 63,
+        "toIndex": 48,
+        "type": "sensor timeout"
+      },
+      {
+        "fromIndex": 63,
+        "toIndex": 49,
+        "type": "OK"
+      },
+      {
+        "fromIndex": 64,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 65,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 66,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 67,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 68,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 70,
+        "type": "six"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 61,
+        "type": "five"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 67,
+        "type": "one"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 66,
+        "type": "two"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 65,
+        "type": "three"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 64,
+        "type": "four"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 68,
+        "type": "seven"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 60,
+        "type": "eight"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 41,
+        "type": "nine"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 42,
+        "type": "ten"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 43,
+        "type": "eleven"
+      },
+      {
+        "fromIndex": 69,
+        "toIndex": 44,
+        "type": "twelve"
+      },
+      {
+        "fromIndex": 70,
+        "toIndex": 63,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 71,
+        "toIndex": 72,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 71,
+        "toIndex": 39,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 72,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 73,
+        "toIndex": 69,
+        "type": "True"
+      },
+      {
+        "fromIndex": 73,
+        "toIndex": 62,
+        "type": "True"
+      },
+      {
+        "fromIndex": 74,
+        "toIndex": 73,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 74,
+        "toIndex": 45,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 74,
+        "toIndex": 37,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 74,
+        "toIndex": 6,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 75,
+        "toIndex": 25,
+        "type": "True"
+      },
+      {
+        "fromIndex": 76,
+        "toIndex": 26,
+        "type": "True"
+      },
+      {
+        "fromIndex": 77,
+        "toIndex": 8,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 77,
+        "toIndex": 7,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 78,
+        "toIndex": 77,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 78,
+        "toIndex": 38,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 80,
+        "toIndex": 79,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 81,
+        "toIndex": 82,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 83,
+        "toIndex": 84,
+        "type": "True"
+      },
+      {
+        "fromIndex": 84,
+        "toIndex": 78,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}
