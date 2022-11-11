@@ -794,9 +794,13 @@ If a default dashboard was selected for that user, then it will be immidiately v
 
 Alternative if a default dashboard wasn't selected, the dashboards can be found on the `Dashboards` tab. 
 
+---
 ## Downloading Data. 
 
+
 To reduce the potential for abuse the source code for that particular tool is not provided, as it can be used to perform DoS attacks to thingsboard installations. 
+
+The downloader application can be found on the following repository [3pro Data Downloader](https://github.com/sigintsolutions/3Pro-Data-Downloader)
 
 To download data run the thingsboard Data Downloader and input the necessary credentials. 
 
@@ -815,9 +819,32 @@ Press the download data,
 
 ## Data post processor application. 
 
+The 3 pro data post processor has been developed to give the researcher the ability to process the data from a field that is monitored retroactively, using different settings.
 
+The data post processor can be found on the following link. [Data Post Processor](https://github.com/sigintsolutions/3pro-data-post-processor)
+
+During normal operation of the platform, every data point that is transmitted is used to calculate the status of the soil and is used to make predictions. For these calculations to work the devices must be correctly configured using specific server attributes. For the specific server attributes as well as description of them refer to 3 pro field configurator git, as well on the main project git.
+
+The problem with that is that if a researcher changes one of the server attribute, this will only be taken into effect after the point where the value changed. While this functionality could have been added in the platform, irresponsible use of this functionality (especially if a device has data points going back years), will put a major strain on the server.
+
+This application solves this issue by running calculations on a local, downloaded copy of the data (as described on the section about downloading data.)
+
+---
 ## Device configurator application. 
+
 3 Pro field configurator has been developed to make the initial configuration of a device easy to a user / agent / researcher. 
+
+To perform the necessary research a number of wireless sensors had to be used to take various measurements of the state of the soil as well as the environmental conditions in an area. To keep all these data easily accessible, a sensor observation IoT platform had to be developed.
+
+On the Sensor Platform, device entities of type "3Pro Device" can be added. This device entity will record the sensor data that is transmitted from the device, and will post process the data accordingly to give some predictions. But for the data to be post processed successfully some specific parameters about a device must be set correctly.
+
+The field configurator application as well as additional Instructions can be found on the following repository:
+
+[Field Configurator](https://github.com/sigintsolutions/3pro-Troodos-Field-Configurator)
+
+
+
+
 
 
 
