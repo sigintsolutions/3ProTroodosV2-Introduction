@@ -621,7 +621,7 @@ This section has values that have calculated for each day, like the minimum and 
 Finally this section has device error codes that can be used with ARGUS IOT logger, as well as alarms relevant to the device. 
 ![](Documentation/images/2022-11-03-14-02-59.png)
 
----
+
 Besides the main screen, most widgets have additional information that can be displayed by pressing on the `...` symbol on top of the widget (if it exists)
 
 ![](Documentation/images/2022-11-03-14-27-53.png)
@@ -794,7 +794,7 @@ If a default dashboard was selected for that user, then it will be immidiately v
 
 Alternative if a default dashboard wasn't selected, the dashboards can be found on the `Dashboards` tab. 
 
----
+
 ## Downloading Data. 
 
 
@@ -829,7 +829,7 @@ The problem with that is that if a researcher changes one of the server attribut
 
 This application solves this issue by running calculations on a local, downloaded copy of the data (as described on the section about downloading data.)
 
----
+
 ## Device configurator application. 
 
 3 Pro field configurator has been developed to make the initial configuration of a device easy to a user / agent / researcher. 
